@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     strictPort: true,
-    allowedHosts: ["lab.drflo.de"]
+    allowedHosts: ["lab.drflo.de", "privacy-guardrail.medien.ifi.lmu.de", "immimed-prjsv22.medien.ifi.lmu.de"]
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

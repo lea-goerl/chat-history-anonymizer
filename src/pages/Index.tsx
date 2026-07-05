@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { HelpForm } from "@/components/HelpForm";
 import { FileText } from "lucide-react";
 import JSZip from "jszip";
+import { MaskedWord, PrivacyTagId, DEFAULT_TAG_ID } from "@/lib/privacyTags";
 
 export interface ChatMessage {
   id: string;
@@ -21,7 +22,7 @@ export interface ChatMessage {
 
 const Index = () => {
   const [chats, setChats] = useState<ChatMessage[]>([]);
-  const [maskedWords, setMaskedWords] = useState<string[]>([]);
+  const [maskedWords, setMaskedWords] = useState<MaskedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpVisible, setHelpvisible] = useState(false);
 
@@ -212,19 +213,30 @@ const Index = () => {
     setChats(prev => prev.map(chat => ({ ...chat, selected })));
   };
 
-  const addMaskedWord = (word: string) => {
-    if (word && !maskedWords.includes(word.toLowerCase())) {
-      setMaskedWords(prev => [...prev, word.toLowerCase()]);
-    }
+  const addMaskedWord = (word: string, tag: PrivacyTagId = DEFAULT_TAG_ID) => {
+    const normalized = word.trim().toLowerCase();
+    if (!normalized) return;
+    setMaskedWords(prev => {
+      const existing = prev.find(w => w.word === normalized);
+      if (existing) {
+        // Word already masked: update its tag to the newly chosen one.
+        return prev.map(w => (w.word === normalized ? { ...w, tag } : w));
+      }
+      return [...prev, { word: normalized, tag }];
+    });
+  };
+
+  const setMaskedWordTag = (word: string, tag: PrivacyTagId) => {
+    setMaskedWords(prev => prev.map(w => (w.word === word ? { ...w, tag } : w)));
   };
 
   const removeMaskedWord = (word: string) => {
-    setMaskedWords(prev => prev.filter(w => w !== word));
+    setMaskedWords(prev => prev.filter(w => w.word !== word));
   };
 
   const applyMasking = (text: string): string => {
     let masked = text;
-    maskedWords.forEach(word => {
+    maskedWords.forEach(({ word }) => {
       const regex = new RegExp(word, 'gi');
       masked = masked.replace(regex, '█'.repeat(word.length));
     });
@@ -294,12 +306,14 @@ const Index = () => {
                   maskedWords={maskedWords}
                   onAddWord={addMaskedWord}
                   onRemoveWord={removeMaskedWord}
+                  onChangeTag={setMaskedWordTag}
                 />
               
                 <ExportControls 
                   chats={chats.filter(c => c.selected)}
                   allChatLength={chats.length}
                   applyMasking={applyMasking}
+                  maskedWords={maskedWords}
                 />
               </div>
             </div>

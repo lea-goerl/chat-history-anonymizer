@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, User, Bot, EyeOff } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { PRIVACY_TAGS, PrivacyTagId } from "@/lib/privacyTags";
 import { ChatMessage } from "@/pages/Index";
 import { toast } from "sonner";
 
@@ -13,7 +22,7 @@ interface ChatViewerProps {
   onToggleChat: (id: string) => void;
   onToggleAll: (selected: boolean) => void;
   applyMasking: (text: string) => string;
-  onAddMaskedWord: (word: string) => void;
+  onAddMaskedWord: (word: string, tag: PrivacyTagId) => void;
 }
 
 export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onAddMaskedWord }: ChatViewerProps) => {
@@ -22,6 +31,10 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
   const [selectedText, setSelectedText] = useState("");
   const [selectionPosition, setSelectionPosition] = useState<{ x: number; y: number } | null>(null);
   const [expandedChats, setExpandedChats] = useState<Set<string>>(new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Ref mirror so the (empty-deps) selection listener sees the current value.
+  const menuOpenRef = useRef(false);
+  useEffect(() => { menuOpenRef.current = menuOpen; }, [menuOpen]);
 
   useEffect(() => {
     const handleSelection = () => {
@@ -39,7 +52,8 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
             y: rect.top - 10
           });
         }
-      } else {
+      } else if (!menuOpenRef.current) {
+        // Don't clear while the tag menu is open (opening it collapses the selection).
         setSelectedText("");
         setSelectionPosition(null);
       }
@@ -54,10 +68,11 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
     };
   }, []);
 
-  const handleMaskSelection = () => {
+  const handleMaskSelection = (tag: PrivacyTagId) => {
     if (selectedText) {
-      onAddMaskedWord(selectedText);
-      toast.success(`"${selectedText}" added to masked words`);
+      onAddMaskedWord(selectedText, tag);
+      const tagLabel = PRIVACY_TAGS.find((t) => t.id === tag)?.label ?? tag;
+      toast.success(`"${selectedText}" masked as ${tagLabel}`);
       window.getSelection()?.removeAllRanges();
       setSelectedText("");
       setSelectionPosition(null);
@@ -79,7 +94,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
   return (
     <>
       {/* Floating mask button */}
-      {selectedText && selectionPosition && (
+      {(selectedText || menuOpen) && selectionPosition && (
         <div
           className="fixed z-50 animate-in fade-in zoom-in-95"
           style={{
@@ -88,14 +103,32 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
             transform: 'translate(-50%, -100%)'
           }}
         >
-          <Button
-            size="sm"
-            onClick={handleMaskSelection}
-            className="shadow-lg"
-          >
-            <EyeOff className="mr-2 h-4 w-4" />
-            Mask "{selectedText.length > 20 ? selectedText.substring(0, 20) + '...' : selectedText}"
-          </Button>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="shadow-lg">
+                <EyeOff className="mr-2 h-4 w-4" />
+                Mask "{selectedText.length > 20 ? selectedText.substring(0, 20) + '...' : selectedText}"
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-80">
+              <DropdownMenuLabel>Choose a privacy tag</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {PRIVACY_TAGS.map((tag) => (
+                <DropdownMenuItem
+                  key={tag.id}
+                  onSelect={() => handleMaskSelection(tag.id)}
+                  className="flex items-start gap-2 py-2"
+                >
+                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${tag.dotClass}`} />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium leading-tight">{tag.label}</span>
+                    <span className="text-xs text-muted-foreground leading-snug">{tag.question}</span>
+                    <span className="text-xs italic text-muted-foreground/80 leading-snug">{tag.example}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
