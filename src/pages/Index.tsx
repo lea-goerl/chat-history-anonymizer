@@ -5,7 +5,7 @@ import { MaskingControls } from "@/components/MaskingControls";
 import { ExportControls } from "@/components/ExportControls";
 import { Button } from "@/components/ui/button";
 import { HelpForm } from "@/components/HelpForm";
-import { FileText } from "lucide-react";
+import { FileText, HelpCircle } from "lucide-react";
 import JSZip from "jszip";
 import { MaskedWord, PrivacyTagId, DEFAULT_TAG_ID } from "@/lib/privacyTags";
 
@@ -243,6 +243,14 @@ const Index = () => {
     return masked;
   };
 
+  const openHelp = () => {
+    setHelpvisible(true);
+    // Wait for the HelpForm to render, then scroll to it.
+    setTimeout(() => {
+      document.getElementById("help-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
   const reset = () => {
     setChats([]);
     setMaskedWords([]);
@@ -251,7 +259,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto flex items-center justify-between px-4 py-6">
           <div className="flex items-center gap-3">
             <FileText className="h-8 w-8 text-primary" />
             <div>
@@ -259,19 +267,23 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">View, filter, and anonymize your chat history for the data donation</p>
             </div>
           </div>
-          <div className="helpbox" onClick={()=>{setHelpvisible(!isHelpVisible)}}><p>Help</p></div>
+          <Button variant="outline" onClick={openHelp}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Help
+          </Button>
         </div>
       </header>
 
-      {isHelpVisible ? <HelpForm ></HelpForm> : <div></div>}
+      {isHelpVisible ? <div id="help-section"><HelpForm onClose={() => setHelpvisible(false)} /></div> : <div></div>}
    
       <main className="container mx-auto px-4 py-8">
         {chats.length === 0 ? (
           <div>
-          <FileUpload onFileUpload={handleFileUpload} isLoading={isLoading} />
-          <div className="flex flex-col items-center">
-            <Button variant="ghost" onClick={()=>{setHelpvisible(!isHelpVisible)}}>I did not receive my ChatGPT export file yet</Button>
-          </div>
+          <FileUpload
+            onFileUpload={handleFileUpload}
+            isLoading={isLoading}
+            onNeedHelp={openHelp}
+          />
         </div>          
         ) : (
           <div className="space-y-6">

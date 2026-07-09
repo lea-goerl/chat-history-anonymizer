@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, User, Bot, EyeOff } from "lucide-react";
+import { MessageSquare, User, EyeOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -147,15 +147,21 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
         </div>
       </div>
 
+      <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-foreground">
+        <strong>Please note:</strong> Only your own prompts (the messages you typed) are shown here and submitted to the researchers. ChatGPT's replies and the rest of the conversation are never sent.
+      </div>
+
       <p className="mb-4 text-sm text-muted-foreground">
-        In the following, you can review the chats included in your history. Before submitting them to the researchers, please check whether there is any personal data that I identifies you (e.g., names) and mask them.
-        You can double click on a word and select "Mask" to hide all occurances of that word.
-        Please hide personal information such as names, phone numbers, email addresses (Hiding names of publicly known people, such as politicians, is not necessary) 
+        Below you can review the prompts from your history. Before submitting them to the researchers, please check whether any of them contain personal data that identifies you (e.g., names) and mask it.
+        You can select a word (or double-click it) and choose a privacy tag to hide every occurrence of it.
+        Please hide personal information such as names, phone numbers, and email addresses. (Hiding names of publicly known people, such as politicians, is not necessary.)
       </p>      
 
       <ScrollArea className="h-[600px] pr-4">
         <div className="space-y-3">
-          {chats.map((chat) => (
+          {chats.map((chat) => {
+            const userMessages = chat.messages.filter((m) => m.role === "user");
+            return (
             <Card
               key={chat.id}
               className={`p-4 transition-colors ${
@@ -174,24 +180,20 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                     <MessageSquare className="h-4 w-4 text-primary" />
                     <h4 className="font-medium text-foreground">{chat.title}</h4>
                     <Badge variant="secondary" className="ml-auto">
-                      {chat.messages.length} messages
+                      {userMessages.length} prompt{userMessages.length !== 1 ? 's' : ''}
                     </Badge>
                   </div>
                   
                   <div className="space-y-2">
-                    {(expandedChats.has(chat.id) ? chat.messages : chat.messages.slice(0, 3)).map((message, idx) => (
+                    {(expandedChats.has(chat.id) ? userMessages : userMessages.slice(0, 3)).map((message, idx) => (
                       <div
                         key={idx}
                         className="rounded-md border border-border bg-background p-3 text-sm"
                       >
                         <div className="mb-1 flex items-center gap-2">
-                          {message.role === 'user' ? (
-                            <User className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <Bot className="h-3 w-3 text-muted-foreground" />
-                          )}
-                          <span className="text-xs font-medium capitalize text-muted-foreground">
-                            {message.role}
+                          <User className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Your prompt
                           </span>
                         </div>
                         <p className="text-foreground line-clamp-2 select-text cursor-text">
@@ -199,14 +201,14 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                         </p>
                       </div>
                     ))}
-                    {chat.messages.length > 3 && (
+                    {userMessages.length > 3 && (
                       <button
                         onClick={() => toggleExpanded(chat.id)}
                         className="text-xs text-primary hover:underline font-medium"
                       >
                         {expandedChats.has(chat.id) 
                           ? "Show less" 
-                          : `+ ${chat.messages.length - 3} more messages`
+                          : `+ ${userMessages.length - 3} more prompts`
                         }
                       </button>
                     )}
@@ -214,7 +216,8 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
     </Card>
