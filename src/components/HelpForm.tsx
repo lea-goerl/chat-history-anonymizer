@@ -17,7 +17,7 @@ export const HelpForm = ({ onClose }: HelpFormProps) => {
 
   const handleHelpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const endpointUrl = "/submit";
+    const endpointUrl = `${import.meta.env.BASE_URL}submit`;
     setIsSubmitting(true);
 
     const url = new URL(window.location.href);

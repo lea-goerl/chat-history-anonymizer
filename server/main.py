@@ -32,6 +32,16 @@ DATA_DIR = Path(os.environ.get("SUBMISSION_DIR", BASE_DIR / "data" / "submission
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Privacy Guardrail", docs_url=None, redoc_url=None)
+@app.middleware("http")
+async def strip_pre_prefix(request, call_next):
+    """App läuft hinter Nginx unter /pre. Optionalen /pre-Präfix normalisieren,
+    damit die Routen immer /, /assets/... und /submit sehen."""
+    path = request.scope.get("path", "")
+    if path == "/pre":
+        request.scope["path"] = "/"
+    elif path.startswith("/pre/"):
+        request.scope["path"] = path[4:]
+    return await call_next(request)
 
 
 def _now_iso() -> str:

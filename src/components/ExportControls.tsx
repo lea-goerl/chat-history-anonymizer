@@ -90,7 +90,7 @@ export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords
       return;
     }
 
-    const endpointUrl = "/submit"
+    const endpointUrl = `${import.meta.env.BASE_URL}submit`
 
     setIsSubmitting(true);
     console.log("Submitting to endpoint:", endpointUrl);

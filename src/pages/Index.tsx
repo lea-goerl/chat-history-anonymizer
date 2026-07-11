@@ -170,7 +170,7 @@ const Index = () => {
       // Show error to user
       alert(`Upload failed: ${errorMessage}\n\nPlease check the console for more details or contact support if the issue persists.`);
 
-      const endpointUrl = "/submit"
+      const endpointUrl = `${import.meta.env.BASE_URL}submit`
       var url = new URL(window.location.href);
       var idOne = url.searchParams.get("id_one");
       
