@@ -8,6 +8,7 @@ import { HelpForm } from "@/components/HelpForm";
 import { FileText, HelpCircle } from "lucide-react";
 import JSZip from "jszip";
 import { MaskedWord, PrivacyTagId, DEFAULT_TAG_ID } from "@/lib/privacyTags";
+import { escapeRegExp } from "@/lib/utils";
 
 export interface ChatMessage {
   id: string;
@@ -237,7 +238,7 @@ const Index = () => {
   const applyMasking = (text: string): string => {
     let masked = text;
     maskedWords.forEach(({ word }) => {
-      const regex = new RegExp(word, 'gi');
+      const regex = new RegExp(escapeRegExp(word), 'gi');
       masked = masked.replace(regex, '█'.repeat(word.length));
     });
     return masked;
